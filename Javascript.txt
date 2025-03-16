@@ -1,0 +1,107 @@
+const services = {
+    tiktok: { 
+        'Likes': { price: 0.35, min: 100 }, 
+        'Followers': { price: 0.2, min: 500 }, 
+        'Views': { price: 0.35, min: 100 }, 
+        'Comments': { price: 0.00, min: 100 } 
+    },
+    facebook: { 
+        'Followers': { price: 0.30, min: 200 }, 
+        'Likes': { price: 0.45, min: 100 }, 
+        'Watchtime': { price: 0.350, min: 1000 }, 
+        'Views': { price: 0.090, min: 500 }, 
+        'Shares': { price: 0.00, min: 10 }, 
+        'Comments': { price: 0.00, min: 10 } 
+    },
+    youtube: { 
+        'Subscribers': { price: 0.200, min: 500 }, 
+        'Views': { price: 0.090, min: 500 }, 
+        'Likes': { price: 0.25, min: 100 }, 
+        'Watchtime': { price: 0.7, min: 1000 },
+        'Comments': { price: 0.00, min: 100 } 
+    },
+    instagram: { 
+        'Likes': { price: 0.15, min: 200 }, 
+        'Followers': { price: 0.15, min: 500 }, 
+        'Views': { price: 0.15, min: 200 }, 
+        'Comments': { price: 0.00, min: 100 },
+        'Story Views': { price: 0.00, min: 100 } 
+    },
+    telegram: { 
+        'Members': { price: 0.19, min: 500 }, 
+        'Views': { price: 0.00, min: 100 }, 
+        'Messages': { price: 0.00, min: 100 } 
+    },
+};
+
+document.getElementById('platform').addEventListener('change', function() {
+    const platform = this.value;
+    const serviceTypeSelect = document.getElementById('serviceType');
+
+    serviceTypeSelect.innerHTML = '<option value="">Select Service Type</option>';
+    document.getElementById('totalPrice').textContent = 'Total Price: GHS 0';
+    document.getElementById('quantity').value = '';
+    document.getElementById('payButton').disabled = true;
+
+    if (platform) {
+        for (const [service] of Object.entries(services[platform])) {
+            const option = document.createElement('option');
+            option.value = service.toLowerCase();
+            option.textContent = service;
+            serviceTypeSelect.appendChild(option);
+        }
+    }
+});
+
+document.getElementById('quantity').addEventListener('input', updateTotalPrice);
+document.getElementById('serviceType').addEventListener('change', updateTotalPrice);
+
+function updateTotalPrice() {
+    const platform = document.getElementById('platform').value;
+    const serviceType = document.getElementById('serviceType').value;
+    const quantity = parseFloat(document.getElementById('quantity').value);
+    const totalPriceElement = document.getElementById('totalPrice');
+    const payButton = document.getElementById('payButton');
+
+    let totalPrice = 0;
+
+    if (platform && serviceType) {
+        const serviceDetails = services[platform][serviceType.charAt(0).toUpperCase() + serviceType.slice(1)];
+        
+        if (serviceDetails && quantity >= serviceDetails.min) {
+            totalPrice = serviceDetails.price * quantity;
+            totalPriceElement.textContent = `Total Price: GHS ${totalPrice.toFixed(2)}`;
+            payButton.disabled = false;
+        } else if (quantity < serviceDetails.min) {
+            totalPriceElement.textContent = `Total Price: GHS 0 (Minimum quantity is ${serviceDetails.min})`;
+            payButton.disabled = true;
+        }
+    } else {
+        totalPriceElement.textContent = 'Total Price: GHS 0';
+        payButton.disabled = true;
+    }
+}
+
+document.getElementById("payButton").addEventListener("click", function() {
+    const email = document.getElementById('email').value;
+    const name = document.getElementById('name').value;
+    const platform = document.getElementById('platform').value;
+    const platformLink = document.getElementById('platformLink').value;
+    const serviceType = document.getElementById('serviceType').value;
+    const quantity = parseFloat(document.getElementById('quantity').value);
+    const totalPrice = parseFloat(document.getElementById('totalPrice').textContent.split('GHS ')[1]);
+
+    const handler = PaystackPop.setup({
+        key: 'pk_live_your_public_key', // Replace with your Paystack public key
+        email: email,
+        amount: totalPrice * 100,
+        currency: "GHS",
+        callback: function(response) {
+            alert('Payment successful! Reference: ' + response.reference);
+        },
+        onClose: function() {
+            alert('Payment process was closed.');
+        }
+    });
+    handler.openIframe(); 
+});
